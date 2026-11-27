@@ -1,29 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440" width="400" height="440" fill="none">
   <defs>
     <linearGradient id="goldFoil" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F1D77A" />
+      <stop offset="0%" stop-color="#F5DF89" />
       <stop offset="48%" stop-color="#D4AF37" />
-      <stop offset="100%" stop-color="#B89122" />
+      <stop offset="100%" stop-color="#B0891E" />
     </linearGradient>
     <path id="ribbonArc" d="M 88,365 Q 200,398 312,365" />
-    <!-- Single Hummingbird silhouette positioned on the left side facing right -->
+    <!-- Symmetrical Hummingbird silhouette positioned on the left side facing right -->
     <g id="hummingbird">
-      <!-- Swept upper wing -->
       <path d="M 86,184 C 66,144 38,116 14,108 C 28,132 42,158 64,182 C 42,162 24,146 12,140 C 26,162 46,180 72,194 Z" fill="url(#goldFoil)" />
-      <!-- Secondary lower wing -->
       <path d="M 74,196 C 52,188 30,192 16,204 C 38,206 58,208 78,208 Z" fill="url(#goldFoil)" opacity="0.92" />
-      <!-- Graceful body & chest -->
       <path d="M 86,184 C 98,176 112,174 120,180 C 125,184 124,194 116,204 C 106,216 92,226 76,232 C 80,218 82,204 86,184 Z" fill="url(#goldFoil)" />
-      <!-- Slender beak pointing toward the shield -->
       <path d="M 120,180 L 146,174 L 122,186 Z" fill="url(#goldFoil)" />
-      <!-- Forked tail feathers -->
       <path d="M 76,232 C 62,248 44,264 30,276 C 48,270 64,258 78,244 C 72,262 62,276 54,286 C 70,274 82,256 90,236 Z" fill="url(#goldFoil)" />
-      <!-- Eye cutout accent -->
       <circle cx="114" cy="182" r="2.2" fill="#102A4C" />
     </g>
   </defs>
 
-  <!-- Subtle top heraldic star crest -->
+  <!-- Top heraldic star crest -->
   <g transform="translate(200, 48)">
     <polygon points="0,-24 5.5,-7.5 22,-7.5 8.5,3 13.5,19 0,9.5 -13.5,19 -8.5,3 -22,-7.5 -5.5,-7.5" fill="url(#goldFoil)" />
     <circle cx="-34" cy="6" r="3" fill="url(#goldFoil)" />
@@ -41,14 +35,12 @@
 
   <!-- Central Heraldic Shield -->
   <g>
-    <!-- Outer shield frame -->
     <path
       d="M 122,94 L 278,94 L 278,196 C 278,266 238,308 200,328 C 162,308 122,266 122,196 Z"
       stroke="url(#goldFoil)"
       stroke-width="6"
       fill="none"
     />
-    <!-- Inner filigree shield line -->
     <path
       d="M 134,106 L 266,106 L 266,194 C 266,256 232,294 200,312 C 168,294 134,256 134,194 Z"
       stroke="url(#goldFoil)"
@@ -56,56 +48,87 @@
       fill="none"
       opacity="0.85"
     />
-    <!-- Decorative corner dots -->
     <circle cx="144" cy="116" r="2.5" fill="url(#goldFoil)" />
     <circle cx="256" cy="116" r="2.5" fill="url(#goldFoil)" />
 
-    <!-- Stylized Tangerine Emblem inside Shield -->
-    <g transform="translate(200, 208)">
-      <!-- Stem -->
-      <path d="M 0,-46 C 2,-58 6,-66 12,-70" stroke="url(#goldFoil)" stroke-width="4" stroke-linecap="round" />
-      <!-- Left botanical leaf -->
-      <path d="M -2,-52 C -18,-68 -42,-66 -46,-50 C -30,-42 -12,-42 -2,-52 Z" fill="url(#goldFoil)" />
-      <!-- Right botanical leaf -->
-      <path d="M 4,-54 C 22,-72 44,-68 48,-52 C 32,-44 14,-44 4,-54 Z" fill="url(#goldFoil)" />
-      <!-- Tangerine body -->
-      <ellipse cx="0" cy="4" rx="46" ry="41" fill="url(#goldFoil)" />
-      <!-- Calyx star at top of fruit -->
-      <path d="M -10,-34 L 0,-28 L 10,-34 L 4,-24 L 0,-18 L -4,-24 Z" fill="#102A4C" opacity="0.85" />
-      <!-- Subtle citrus contour arcs -->
-      <path d="M -26,-16 C -34,0 -32,18 -20,30" stroke="#102A4C" stroke-width="2.2" stroke-linecap="round" opacity="0.5" />
-      <path d="M 26,-16 C 34,0 32,18 20,30" stroke="#102A4C" stroke-width="2.2" stroke-linecap="round" opacity="0.5" />
-      <circle cx="-14" cy="14" r="2" fill="#102A4C" opacity="0.45" />
-      <circle cx="16" cy="10" r="2" fill="#102A4C" opacity="0.45" />
-      <circle cx="4" cy="24" r="2" fill="#102A4C" opacity="0.45" />
+    <!-- Custom Heraldic Tangerine traced from user photo: whole fruit + 2 right leaves + 3 peeled wedges -->
+    <g transform="translate(198, 206)">
+      <!-- Upper-right pointed citrus leaf -->
+      <path
+        d="M 10,-28 C 18,-54 44,-66 60,-60 C 56,-36 38,-18 14,-16 Z"
+        fill="url(#goldFoil)"
+      />
+      <path d="M 16,-24 Q 36,-42 54,-56" stroke="#102A4C" stroke-width="1.8" stroke-linecap="round" opacity="0.65" />
+
+      <!-- Lower-right secondary citrus leaf behind wedges -->
+      <path
+        d="M 20,-10 C 36,-22 54,-18 62,-4 C 48,4 32,4 20,-4 Z"
+        fill="url(#goldFoil)"
+        opacity="0.9"
+      />
+
+      <!-- Whole round tangerine body (left-center) -->
+      <ellipse cx="-18" cy="-8" rx="40" ry="37" fill="url(#goldFoil)" />
+
+      <!-- Natural calyx stem star & radiating dimples at upper crown (matching photo) -->
+      <g transform="translate(-18, -32)">
+        <circle cx="0" cy="0" r="4.2" fill="#102A4C" />
+        <path
+          d="M 0,-9 L 2.2,-3 L 8.5,-4 L 3.8,1 L 6.5,7 L 0,3.8 L -6.5,7 L -3.8,1 L -8.5,-4 L -2.2,-3 Z"
+          fill="#102A4C"
+          opacity="0.72"
+        />
+        <path d="M -14,2 Q -8,8 -2,10" stroke="#102A4C" stroke-width="1.5" stroke-linecap="round" opacity="0.45" />
+        <path d="M 14,2 Q 8,8 2,10" stroke="#102A4C" stroke-width="1.5" stroke-linecap="round" opacity="0.45" />
+      </g>
+
+      <!-- Subtle citrus peel contour & pore texture -->
+      <path d="M -44,-18 C -50,-4 -46,12 -34,20" stroke="#102A4C" stroke-width="2" stroke-linecap="round" opacity="0.42" />
+      <circle cx="-32" cy="-6" r="1.6" fill="#102A4C" opacity="0.38" />
+      <circle cx="-24" cy="8" r="1.6" fill="#102A4C" opacity="0.38" />
+      <circle cx="-38" cy="4" r="1.4" fill="#102A4C" opacity="0.35" />
+
+      <!-- Back peeled tangerine wedge (right-most) -->
+      <path
+        d="M 24,-4 C 42,-2 56,12 58,28 C 52,38 38,40 24,30 C 20,18 20,6 24,-4 Z"
+        fill="url(#goldFoil)"
+        stroke="#102A4C"
+        stroke-width="2.2"
+      />
+
+      <!-- Left foreground peeled wedge (angled under whole fruit) -->
+      <path
+        d="M 6,16 C -4,26 -10,40 -4,52 C 6,56 20,48 26,34 C 22,24 14,18 6,16 Z"
+        fill="url(#goldFoil)"
+        stroke="#102A4C"
+        stroke-width="2.2"
+      />
+
+      <!-- Primary center-right foreground peeled tangerine wedge (iconic crescent from photo) -->
+      <path
+        d="M 20,2 C 32,6 44,24 44,44 C 44,58 32,64 18,58 C 6,50 4,32 10,14 C 13,6 16,2 20,2 Z"
+        fill="url(#goldFoil)"
+        stroke="#102A4C"
+        stroke-width="2.6"
+      />
+      <!-- Inner citrus pulp veining on primary wedge -->
+      <path d="M 20,12 C 28,22 33,36 30,50" stroke="#102A4C" stroke-width="1.5" stroke-linecap="round" opacity="0.55" />
+      <path d="M 15,24 L 26,20" stroke="#102A4C" stroke-width="1.2" stroke-linecap="round" opacity="0.48" />
+      <path d="M 14,34 L 29,31" stroke="#102A4C" stroke-width="1.2" stroke-linecap="round" opacity="0.48" />
+      <path d="M 16,44 L 29,43" stroke="#102A4C" stroke-width="1.2" stroke-linecap="round" opacity="0.48" />
     </g>
   </g>
 
   <!-- Curved Bottom Ribbon with 06.08.2026 -->
   <g>
-    <!-- Left ribbon tail -->
     <path d="M 52,354 L 84,344 L 84,378 L 52,388 L 66,371 Z" fill="url(#goldFoil)" opacity="0.88" />
-    <!-- Right ribbon tail -->
     <path d="M 348,354 L 316,344 L 316,378 L 348,388 L 334,371 Z" fill="url(#goldFoil)" opacity="0.88" />
-    <!-- Main curved ribbon banner -->
     <path
       d="M 78,340 Q 200,378 322,340 L 322,380 Q 200,418 78,380 Z"
       fill="url(#goldFoil)"
     />
-    <!-- Inner hairline border on ribbon -->
-    <path
-      d="M 86,348 Q 200,384 314,348"
-      stroke="#102A4C"
-      stroke-width="1.4"
-      opacity="0.65"
-    />
-    <path
-      d="M 86,372 Q 200,408 314,372"
-      stroke="#102A4C"
-      stroke-width="1.4"
-      opacity="0.65"
-    />
-    <!-- Date inscription -->
+    <path d="M 86,348 Q 200,384 314,348" stroke="#102A4C" stroke-width="1.4" opacity="0.65" />
+    <path d="M 86,372 Q 200,408 314,372" stroke="#102A4C" stroke-width="1.4" opacity="0.65" />
     <text
       font-family="Georgia, 'Times New Roman', serif"
       font-size="22"

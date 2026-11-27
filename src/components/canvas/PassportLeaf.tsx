@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { animated, useSpring } from '@react-spring/three';
-import type { ThreeEvent } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import { I18N, type CrestStoryTopic, type Language } from '@/constants/i18n';
 import { COLORS, PASSPORT_DIMS, PBR, SPRING_CONFIGS } from '@/constants/tokens';
+import { createRoundedCoverGeometry } from '@/utils/geometry';
 
 export interface PassportLeafProps {
   /** Zero-based index from top of right stack: 0 = Front Cover, 1 = Leaf 1, 2 = Leaf 2 */
@@ -10,11 +13,74 @@ export interface PassportLeafProps {
   readonly totalLeaves: number;
   readonly isFlipped: boolean;
   readonly isCover?: boolean;
+  readonly segmentsX?: number;
+  readonly segmentsY?: number;
+  readonly language?: Language;
+  readonly showHotspots?: boolean;
   readonly frontTexture: THREE.Texture;
   readonly backTexture: THREE.Texture;
   readonly frontMetalnessMap?: THREE.Texture;
+  readonly frontRoughnessMap?: THREE.Texture;
+  readonly frontNormalMap?: THREE.Texture;
+  readonly frontClearcoatMap?: THREE.Texture;
+  readonly paperNormalMap?: THREE.Texture;
+  readonly alphaRecto: THREE.Texture;
+  readonly alphaVerso: THREE.Texture;
   readonly onFrontClick?: () => void;
   readonly onBackClick?: () => void;
+  readonly onOpenCrestStory?: (topic: CrestStoryTopic) => void;
+}
+
+const DRAG_PIXEL_THRESHOLD = 4;
+const BORDER_ZONE_RATIO = 0.2;
+
+const COVER_NORMAL_SCALE = new THREE.Vector2(0.85, 0.85);
+const PAPER_NORMAL_SCALE = new THREE.Vector2(0.32, 0.32);
+
+function isPointerOnOuterBorder(event: ThreeEvent<PointerEvent | MouseEvent>, isFlipped: boolean): boolean {
+  const uv = event.uv;
+  if (!uv) return false;
+  return isFlipped ? uv.x <= BORDER_ZONE_RATIO : uv.x >= 1 - BORDER_ZONE_RATIO;
+}
+
+function deformCurvedPage(
+  geometry: THREE.PlaneGeometry,
+  pageWidth: number,
+  segmentsX: number,
+  progress: number,
+  baseZ: number,
+  normalOffset: number,
+  isVerso: boolean,
+): void {
+  const pos = geometry.attributes.position;
+  if (!pos) return;
+
+  const baseAngle = progress * Math.PI;
+  const midTurn = Math.sin(progress * Math.PI);
+
+  for (let i = 0; i < pos.count; i += 1) {
+    const col = i % (segmentsX + 1);
+    const uTex = col / segmentsX;
+    const u = isVerso ? 1 - uTex : uTex;
+
+    const lag = midTurn * 0.44 * Math.pow(u, 1.35);
+    const localAngle = Math.max(0, Math.min(Math.PI, baseAngle - lag));
+
+    const dist = u * pageWidth;
+    const cosA = Math.cos(localAngle);
+    const sinA = Math.sin(localAngle);
+
+    // Always positive +Z arch so both right-side and left-side pages curve UP away from covers
+    const archUpZ = Math.sin(u * Math.PI) * (0.014 + 0.052 * midTurn);
+    const nx = -sinA;
+    const nz = cosA;
+
+    pos.setX(i, cosA * dist + nx * normalOffset);
+    pos.setZ(i, baseZ + sinA * dist + archUpZ + nz * normalOffset);
+  }
+
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
 }
 
 export function PassportLeaf({
@@ -22,67 +88,92 @@ export function PassportLeaf({
   totalLeaves,
   isFlipped,
   isCover = false,
+  segmentsX = 28,
+  segmentsY = 6,
+  language = 'pt',
+  showHotspots = false,
   frontTexture,
   backTexture,
   frontMetalnessMap,
+  frontRoughnessMap,
+  frontNormalMap,
+  frontClearcoatMap,
+  paperNormalMap,
+  alphaRecto,
+  alphaVerso,
   onFrontClick,
   onBackClick,
+  onOpenCrestStory,
 }: PassportLeafProps) {
-  const { width, height, coverThickness, leafThickness, leafZSpacing, spinePivotX } = PASSPORT_DIMS;
+  const { width, height, coverThickness, leafThickness, leafZSpacing, cornerRadius, spinePivotX } =
+    PASSPORT_DIMS;
 
-  // Anti-z-fighting stack heights (exact 0.002 leaf spacing on both right and left stacks)
+  const pageWidth = width - 0.05;
+  const pageHeight = height - 0.06;
+
   const rightZ = isCover
-    ? totalLeaves * leafZSpacing + coverThickness / 2
-    : (totalLeaves - index) * leafZSpacing;
+    ? totalLeaves * leafZSpacing + coverThickness / 2 + 0.01
+    : (totalLeaves - index) * leafZSpacing + 0.002;
 
-  const leftZ = isCover ? -(coverThickness / 2) : index * leafZSpacing;
+  const leftZ = isCover ? -(coverThickness / 2) - 0.006 : 0.004 + index * 0.004;
 
-  // Slight natural rest angle so flipped pages sit organically without clipping
-  const targetRotationY = isFlipped ? -Math.PI + 0.015 : 0;
-  const targetZ = isFlipped ? leftZ : rightZ;
-
-  const { rotationY, positionZ } = useSpring({
-    rotationY: targetRotationY,
-    positionZ: targetZ,
-    config: isCover ? SPRING_CONFIGS.cover : SPRING_CONFIGS.leaf,
+  const coverSpring = useSpring({
+    rotationY: isFlipped ? -Math.PI : 0,
+    positionZ: isFlipped ? leftZ : rightZ,
+    config: SPRING_CONFIGS.cover,
   });
 
-  // Materials for the rigid 3D leather front cover (6 faces of BoxGeometry)
-  const coverMaterials = useMemo(() => {
+  const leafSpring = useSpring({
+    progress: isFlipped ? 1 : 0,
+    config: SPRING_CONFIGS.leaf,
+  });
+
+  const coverBoardGeom = useMemo(() => {
     if (!isCover) return null;
+    return createRoundedCoverGeometry(width, height, coverThickness, cornerRadius, true);
+  }, [isCover, width, height, coverThickness, cornerRadius]);
 
-    const edgeMaterial = new THREE.MeshStandardMaterial({
-      color: COLORS.leatherNavy,
-      roughness: PBR.leather.roughness,
-      metalness: PBR.leather.metalness,
-    });
+  const rectoGeom = useMemo(() => {
+    if (isCover) return null;
+    return new THREE.PlaneGeometry(pageWidth, pageHeight, segmentsX, segmentsY);
+  }, [isCover, pageWidth, pageHeight, segmentsX, segmentsY]);
 
-    const frontMaterial = new THREE.MeshStandardMaterial({
-      map: frontTexture,
-      metalnessMap: frontMetalnessMap ?? null,
-      metalness: frontMetalnessMap ? PBR.goldFoil.metalness : PBR.leather.metalness,
-      roughness: PBR.leather.roughness * 0.75,
-    });
+  const versoGeom = useMemo(() => {
+    if (isCover) return null;
+    return new THREE.PlaneGeometry(pageWidth, pageHeight, segmentsX, segmentsY);
+  }, [isCover, pageWidth, pageHeight, segmentsX, segmentsY]);
 
-    const innerMaterial = new THREE.MeshStandardMaterial({
-      map: backTexture,
-      roughness: 0.82,
-      metalness: 0.05,
-    });
+  useEffect(() => {
+    return () => {
+      coverBoardGeom?.dispose();
+      rectoGeom?.dispose();
+      versoGeom?.dispose();
+      document.body.style.cursor = 'auto';
+    };
+  }, [coverBoardGeom, rectoGeom, versoGeom]);
 
-    // BoxGeometry face order: +X, -X, +Y, -Y, +Z (front), -Z (back/inner)
-    return [
-      edgeMaterial,
-      edgeMaterial,
-      edgeMaterial,
-      edgeMaterial,
-      frontMaterial,
-      innerMaterial,
-    ];
-  }, [isCover, frontTexture, backTexture, frontMetalnessMap]);
+  const lastProgressRef = useRef<number>(-1);
+  useEffect(() => {
+    if (isCover || !rectoGeom || !versoGeom) return;
+    const p = isFlipped ? 1 : 0;
+    const baseZ = rightZ * (1 - p) + leftZ * p;
+    deformCurvedPage(rectoGeom, pageWidth, segmentsX, p, baseZ, leafThickness / 2, false);
+    deformCurvedPage(versoGeom, pageWidth, segmentsX, p, baseZ, -leafThickness / 2, true);
+    lastProgressRef.current = p;
+  }, [isCover, rectoGeom, versoGeom, pageWidth, segmentsX, rightZ, leftZ, leafThickness, isFlipped]);
 
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
+  useFrame(() => {
+    if (isCover || !rectoGeom || !versoGeom) return;
+    const p = leafSpring.progress.get();
+    if (Math.abs(p - lastProgressRef.current) < 0.00025) return;
+
+    const baseZ = rightZ * (1 - p) + leftZ * p;
+    deformCurvedPage(rectoGeom, pageWidth, segmentsX, p, baseZ, leafThickness / 2, false);
+    deformCurvedPage(versoGeom, pageWidth, segmentsX, p, baseZ, -leafThickness / 2, true);
+    lastProgressRef.current = p;
+  });
+
+  const triggerFlip = () => {
     if (isFlipped) {
       onBackClick?.();
     } else {
@@ -90,51 +181,186 @@ export function PassportLeaf({
     }
   };
 
-  return (
-    // Left-edge spine hinge pivot at x = -width / 2
-    <animated.group
-      position-x={spinePivotX}
-      position-y={0}
-      position-z={positionZ}
-      rotation-y={rotationY}
-    >
-      {/* Offset geometry by +width / 2 so left edge aligns with the spine pivot */}
-      <group position={[width / 2, 0, 0]} onClick={handleClick}>
-        {isCover && coverMaterials ? (
-          <mesh castShadow receiveShadow material={coverMaterials}>
-            <boxGeometry args={[width, height, coverThickness]} />
-          </mesh>
-        ) : (
-          <>
-            {/* Recto (front face, +Z when unflipped) */}
-            <mesh position={[0, 0, leafThickness / 2]} castShadow receiveShadow>
-              <planeGeometry args={[width - 0.04, height - 0.05]} />
-              <meshStandardMaterial
-                map={frontTexture}
-                roughness={PBR.paper.roughness}
-                metalness={PBR.paper.metalness}
-                side={THREE.FrontSide}
-              />
-            </mesh>
+  // Single-click ONLY flips when on the outer 20% border/corner AND not an orbit drag
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    if (event.delta > DRAG_PIXEL_THRESHOLD) return;
+    if (isPointerOnOuterBorder(event, isFlipped)) {
+      triggerFlip();
+    }
+  };
 
-            {/* Verso (back face, -Z when unflipped → faces viewer when flipped) */}
-            <mesh
-              position={[0, 0, -leafThickness / 2]}
-              rotation={[0, Math.PI, 0]}
-              castShadow
-              receiveShadow
-            >
-              <planeGeometry args={[width - 0.04, height - 0.05]} />
-              <meshStandardMaterial
-                map={backTexture}
-                roughness={PBR.paper.roughness}
-                metalness={PBR.paper.metalness}
-                side={THREE.FrontSide}
-              />
-            </mesh>
-          </>
-        )}
-      </group>
-    </animated.group>
+  // Double-click flips anywhere on the cover/page (also drag-safe)
+  const handleDoubleClick = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    if (event.delta > DRAG_PIXEL_THRESHOLD) return;
+    triggerFlip();
+  };
+
+  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    document.body.style.cursor = isPointerOnOuterBorder(event, isFlipped) ? 'pointer' : 'grab';
+  };
+
+  const handlePointerOut = () => {
+    document.body.style.cursor = 'auto';
+  };
+
+  if (isCover && coverBoardGeom) {
+    return (
+      <animated.group
+        position-x={spinePivotX}
+        position-y={0}
+        position-z={coverSpring.positionZ}
+        rotation-y={coverSpring.rotationY}
+      >
+        <group
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          onPointerMove={handlePointerMove}
+          onPointerOut={handlePointerOut}
+        >
+          <mesh geometry={coverBoardGeom} castShadow receiveShadow>
+            <meshPhysicalMaterial
+              color={COLORS.leatherNavy}
+              roughness={PBR.leather.roughness}
+              metalness={PBR.leather.metalness}
+              sheen={0.18}
+              sheenRoughness={0.75}
+              sheenColor="#1C3F6E"
+            />
+          </mesh>
+
+          {/* Outer gold-stamped leather face (+Z) with MeshPhysicalMaterial + Normal Map + Foil Clearcoat */}
+          <mesh position={[width / 2, 0, coverThickness / 2 + 0.0005]} castShadow receiveShadow>
+            <planeGeometry args={[width - 0.01, height - 0.01]} />
+            <meshPhysicalMaterial
+              map={frontTexture}
+              metalnessMap={frontMetalnessMap ?? null}
+              roughnessMap={frontRoughnessMap ?? null}
+              normalMap={frontNormalMap ?? null}
+              normalScale={COVER_NORMAL_SCALE}
+              clearcoat={0.78}
+              clearcoatMap={frontClearcoatMap ?? null}
+              clearcoatRoughness={0.18}
+              metalness={1}
+              roughness={1}
+              alphaMap={alphaRecto}
+              transparent
+              alphaTest={0.5}
+              side={THREE.FrontSide}
+            />
+          </mesh>
+
+          <mesh
+            position={[width / 2, 0, -(coverThickness / 2 + 0.0005)]}
+            rotation={[0, Math.PI, 0]}
+            receiveShadow
+          >
+            <planeGeometry args={[width - 0.01, height - 0.01]} />
+            <meshPhysicalMaterial
+              map={backTexture}
+              roughness={0.86}
+              metalness={0.05}
+              alphaMap={alphaVerso}
+              transparent
+              alphaTest={0.5}
+              side={THREE.FrontSide}
+            />
+          </mesh>
+
+          {/* Subtle pulsing gold interactive hotspots on the closed Front Cover */}
+          {showHotspots && !isFlipped && onOpenCrestStory ? (
+            <>
+              <Html
+                position={[width * 0.34, 0.22, coverThickness / 2 + 0.03]}
+                center
+                distanceFactor={6}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCrestStory('colibri');
+                  }}
+                  title={I18N[language].hotspotColibri}
+                  className="group flex items-center gap-1.5 rounded-full border border-[#F5DF89]/80 bg-[#102A4C]/85 px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap text-[#F5DF89] shadow-lg backdrop-blur-sm transition hover:scale-105 hover:bg-[#102A4C] cursor-pointer"
+                >
+                  <span className="h-2 w-2 rounded-full bg-[#F5DF89] animate-ping" />
+                  <span>{I18N[language].hotspotColibri}</span>
+                </button>
+              </Html>
+
+              <Html
+                position={[width * 0.56, -0.02, coverThickness / 2 + 0.03]}
+                center
+                distanceFactor={6}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCrestStory('tangerine');
+                  }}
+                  title={I18N[language].hotspotTangerine}
+                  className="group flex items-center gap-1.5 rounded-full border border-[#E86F2C]/90 bg-[#102A4C]/85 px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap text-[#F7F3E8] shadow-lg backdrop-blur-sm transition hover:scale-105 hover:bg-[#E86F2C] cursor-pointer"
+                >
+                  <span className="h-2 w-2 rounded-full bg-[#E86F2C] animate-ping" />
+                  <span>{I18N[language].hotspotTangerine}</span>
+                </button>
+              </Html>
+            </>
+          ) : null}
+        </group>
+      </animated.group>
+    );
+  }
+
+  return (
+    <group
+      position={[spinePivotX, 0, 0]}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onPointerMove={handlePointerMove}
+      onPointerOut={handlePointerOut}
+    >
+      {rectoGeom ? (
+        <mesh geometry={rectoGeom} castShadow receiveShadow>
+          <meshPhysicalMaterial
+            map={frontTexture}
+            normalMap={paperNormalMap ?? null}
+            normalScale={PAPER_NORMAL_SCALE}
+            alphaMap={alphaRecto}
+            transparent
+            alphaTest={0.5}
+            roughness={PBR.paper.roughness}
+            metalness={PBR.paper.metalness}
+            sheen={0.28}
+            sheenRoughness={0.85}
+            sheenColor="#F5EFE0"
+            side={THREE.FrontSide}
+          />
+        </mesh>
+      ) : null}
+
+      {versoGeom ? (
+        <mesh geometry={versoGeom} castShadow receiveShadow>
+          <meshPhysicalMaterial
+            map={backTexture}
+            normalMap={paperNormalMap ?? null}
+            normalScale={PAPER_NORMAL_SCALE}
+            alphaMap={alphaVerso}
+            transparent
+            alphaTest={0.5}
+            roughness={PBR.paper.roughness}
+            metalness={PBR.paper.metalness}
+            sheen={0.28}
+            sheenRoughness={0.85}
+            sheenColor="#F5EFE0"
+            side={THREE.FrontSide}
+          />
+        </mesh>
+      ) : null}
+    </group>
   );
 }
