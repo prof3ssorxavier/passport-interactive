@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" width="280" height="280" fill="none">
+  <defs>
+    <path id="sdqTopArc" d="M 46,140 A 94,94 0 1,1 234,140" />
+    <path id="sdqBottomArc" d="M 234,140 A 94,94 0 1,1 46,140" />
+  </defs>
+
+  <!-- Concentric Official Seal Rings -->
+  <circle cx="140" cy="140" r="126" stroke="#9B2C2C" stroke-width="5" />
+  <circle cx="140" cy="140" r="116" stroke="#9B2C2C" stroke-width="1.8" stroke-dasharray="6 4" />
+  <circle cx="140" cy="140" r="78" stroke="#9B2C2C" stroke-width="2.5" />
+
+  <!-- Circular Inscriptions -->
+  <text font-family="Georgia, serif" font-size="14" font-weight="700" letter-spacing="2.8" fill="#9B2C2C">
+    <textPath href="#sdqTopArc" startOffset="50%" text-anchor="middle">
+      REPÚBLICA DOMINICANA
+    </textPath>
+  </text>
+  <text font-family="Georgia, serif" font-size="13.5" font-weight="700" letter-spacing="2.5" fill="#9B2C2C">
+    <textPath href="#sdqBottomArc" startOffset="50%" text-anchor="middle">
+      SANTO DOMINGO • SDQ
+    </textPath>
+  </text>
+
+  <!-- Side Security Stars -->
+  <polygon points="44,132 46,138 52,138 47,142 49,148 44,144 39,148 41,142 36,138 42,138" fill="#9B2C2C" />
+  <polygon points="236,132 238,138 244,138 239,142 241,148 236,144 231,148 233,142 228,138 234,138" fill="#9B2C2C" />
+
+  <!-- Center Residence Visa Block -->
+  <text x="140" y="114" text-anchor="middle" font-family="Georgia, serif" font-size="12" font-weight="700" letter-spacing="2" fill="#9B2C2C">
+    VISA DE
+  </text>
+  <text x="140" y="138" text-anchor="middle" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="2" fill="#9B2C2C">
+    RESIDENCIA
+  </text>
+  <line x1="86" y1="149" x2="194" y2="149" stroke="#9B2C2C" stroke-width="1.6" />
+  <text x="140" y="170" text-anchor="middle" font-family="'Courier New', monospace" font-size="14" font-weight="700" letter-spacing="2.5" fill="#9B2C2C">
+    MA060826
+  </text>
+  <text x="140" y="190" text-anchor="middle" font-family="'Courier New', monospace" font-size="10.5" font-weight="700" letter-spacing="1.8" fill="#9B2C2C">
+    DGM • AUTORIZADO
+  </text>
+</svg>

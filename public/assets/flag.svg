@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <clipPath id="flagClip">
+      <rect x="0" y="0" width="300" height="200" rx="6" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#flagClip)">
+    <!-- Base Navy Blue Field -->
+    <rect x="0" y="0" width="300" height="200" fill="#102A4C" />
+
+    <!-- Tangerine Orange Lower-Right Diagonal Field -->
+    <polygon points="0,200 300,200 300,0" fill="#E86F2C" />
+
+    <!-- Metallic Gold Diagonal Fimbriation Band -->
+    <polygon points="0,186 279,0 300,0 300,14 21,200 0,200" fill="#D4AF37" />
+
+    <!-- Central Navy Medallion with Gold Ring -->
+    <circle cx="150" cy="100" r="44" fill="#102A4C" stroke="#D4AF37" stroke-width="4" />
+    <circle cx="150" cy="100" r="37" fill="none" stroke="#D4AF37" stroke-width="1.2" opacity="0.7" />
+
+    <!-- Centered Gold Hummingbird in Flight -->
+    <g transform="translate(150, 100) scale(0.55) translate(-80, -200)">
+      <path d="M 86,184 C 66,144 38,116 14,108 C 28,132 42,158 64,182 C 42,162 24,146 12,140 C 26,162 46,180 72,194 Z" fill="#D4AF37" />
+      <path d="M 74,196 C 52,188 30,192 16,204 C 38,206 58,208 78,208 Z" fill="#D4AF37" />
+      <path d="M 86,184 C 98,176 112,174 120,180 C 125,184 124,194 116,204 C 106,216 92,226 76,232 C 80,218 82,204 86,184 Z" fill="#D4AF37" />
+      <path d="M 120,180 L 146,174 L 122,186 Z" fill="#D4AF37" />
+      <path d="M 76,232 C 62,248 44,264 30,276 C 48,270 64,258 78,244 C 72,262 62,276 54,286 C 70,274 82,256 90,236 Z" fill="#D4AF37" />
+    </g>
+  </g>
+</svg>
